@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//go:embed test_stage1.txt
+//go:embed data/test_stage1.txt
 var stageOneInput []byte
 
 func TestStageOne(t *testing.T) {
@@ -20,7 +20,7 @@ func TestStageOne(t *testing.T) {
 	}
 }
 
-//go:embed test_stage2.txt
+//go:embed data/test_stage2.txt
 var stageTwoInput []byte
 
 func TestStageTwo(t *testing.T) {

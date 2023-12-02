@@ -2,21 +2,18 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	_ "embed"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 
-	// "github.com/bzick/tokenizer"
-	"aoc2023/internal/tokenizer"
+	"github.com/nlm/adventofcode2023/internal/stage"
+	"github.com/nlm/adventofcode2023/internal/tokenizer"
 )
-
-var flagFile = flag.String("file", "input.txt", "filename")
-var flagStageTwo = flag.Bool("stage2", false, "stage2")
 
 const (
 	TZero tokenizer.Key = iota
@@ -85,28 +82,35 @@ func ProcessInput(parser *tokenizer.Tokenizer, r io.Reader) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		fmt.Println(s.Text(), "->", v)
+		// fmt.Println(s.Text(), "->", v)
 		sum += v
 	}
 	return sum, nil
 }
 
+//go:embed data/input.txt
+var input []byte
+
+func Stage1() error {
+	parser := Tokenizer(false)
+	v, err := ProcessInput(parser, bytes.NewReader(input))
+	if err != nil {
+		return err
+	}
+	log.Print(v)
+	return nil
+}
+
+func Stage2() error {
+	parser := Tokenizer(true)
+	v, err := ProcessInput(parser, bytes.NewReader(input))
+	if err != nil {
+		return err
+	}
+	log.Print(v)
+	return nil
+}
+
 func main() {
-	flag.Parse()
-
-	// Parser
-	parser := Tokenizer(*flagStageTwo)
-
-	// File
-	f, err := os.Open(*flagFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Scan
-	v, err := ProcessInput(parser, f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(v)
+	stage.RunCLI(Stage1, Stage2)
 }
