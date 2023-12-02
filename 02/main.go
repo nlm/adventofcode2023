@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	_ "embed"
-	"log"
+	"fmt"
 
 	"github.com/nlm/adventofcode2023/internal/stage"
 )
@@ -36,7 +36,7 @@ func Stage1() error {
 			sum += id
 		}
 	}
-	log.Print(sum)
+	fmt.Println(sum)
 	return nil
 }
 
@@ -62,7 +62,7 @@ func Stage2() error {
 		}
 		sum += ref.Power()
 	}
-	log.Println(sum)
+	fmt.Println(sum)
 	return nil
 }
 

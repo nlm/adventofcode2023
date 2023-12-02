@@ -12,7 +12,7 @@ import (
 var stageOneInput []byte
 
 func TestStageOne(t *testing.T) {
-	p := Tokenizer(false)
+	p := Stage1Tokenizer()
 	s := bytes.NewReader(stageOneInput)
 	v, err := ProcessInput(p, s)
 	if assert.NoError(t, err) {
@@ -24,7 +24,7 @@ func TestStageOne(t *testing.T) {
 var stageTwoInput []byte
 
 func TestStageTwo(t *testing.T) {
-	p := Tokenizer(true)
+	p := Stage2Tokenizer()
 	s := bytes.NewReader(stageTwoInput)
 	v, err := ProcessInput(p, s)
 	if assert.NoError(t, err) {
@@ -33,7 +33,7 @@ func TestStageTwo(t *testing.T) {
 }
 
 func TestOther(t *testing.T) {
-	p := Tokenizer(true)
+	p := Stage2Tokenizer()
 	for _, tc := range []struct {
 		input []byte
 		value int
