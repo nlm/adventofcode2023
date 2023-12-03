@@ -2,9 +2,8 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	_ "embed"
-	"fmt"
+	"io"
 
 	"github.com/nlm/adventofcode2023/internal/stage"
 )
@@ -12,18 +11,18 @@ import (
 //go:embed data/input.txt
 var input []byte
 
-func Stage1() error {
+func Stage1(input io.Reader) (any, error) {
 	ref := Draw{
 		Red:   12,
 		Green: 13,
 		Blue:  14,
 	}
-	s := bufio.NewScanner(bytes.NewReader(input))
+	s := bufio.NewScanner(input)
 	sum := 0
 	for s.Scan() {
 		id, draws, err := ParseLine(s.Bytes())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		possible := true
 		for _, d := range draws {
@@ -36,17 +35,16 @@ func Stage1() error {
 			sum += id
 		}
 	}
-	fmt.Println(sum)
-	return nil
+	return sum, nil
 }
 
-func Stage2() error {
-	s := bufio.NewScanner(bytes.NewReader(input))
+func Stage2(input io.Reader) (any, error) {
+	s := bufio.NewScanner(input)
 	sum := 0
 	for s.Scan() {
 		_, draws, err := ParseLine(s.Bytes())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ref := Draw{}
 		for _, d := range draws {
@@ -62,10 +60,9 @@ func Stage2() error {
 		}
 		sum += ref.Power()
 	}
-	fmt.Println(sum)
-	return nil
+	return sum, nil
 }
 
 func main() {
-	stage.RunCLI(Stage1, Stage2)
+	stage.RunCLI(input, Stage1, Stage2)
 }

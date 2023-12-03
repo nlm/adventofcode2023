@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"testing"
 
+	"github.com/nlm/adventofcode2023/internal/stage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,22 +76,39 @@ func TestParseLine(t *testing.T) {
 	}
 }
 
-// func TestIsAdjascent(t *testing.T) {
-// }
-
 //go:embed data/test_stage1.txt
 var stage1Data []byte
 
 func TestStage1(t *testing.T) {
-	parts, symbols, err := Parse(bytes.NewReader(stage1Data))
-	assert.NoError(t, err)
-	sum := CalulatePartsSum(parts, symbols)
-	assert.Equal(t, 4361, sum)
+	stage.Test(t, Stage1, []stage.TestCase{
+		{
+			Name:   "example",
+			Input:  stage1Data,
+			Result: 4361,
+			Err:    nil,
+		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 546312,
+			Err:    nil,
+		},
+	})
 }
 
 func TestStage2(t *testing.T) {
-	parts, symbols, err := Parse(bytes.NewReader(stage1Data))
-	assert.NoError(t, err)
-	sum := CalulateGearRatio(parts, symbols)
-	assert.Equal(t, 467835, sum)
+	stage.Test(t, Stage2, []stage.TestCase{
+		{
+			Name:   "example",
+			Input:  stage1Data,
+			Result: 467835,
+			Err:    nil,
+		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 87449461,
+			Err:    nil,
+		},
+	})
 }

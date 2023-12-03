@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"testing"
 
+	"github.com/nlm/adventofcode2023/internal/stage"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,27 +12,43 @@ import (
 var stageOneInput []byte
 
 func TestStageOne(t *testing.T) {
-	p := Stage1Tokenizer()
-	s := bytes.NewReader(stageOneInput)
-	v, err := ProcessInput(p, s)
-	if assert.NoError(t, err) {
-		assert.Equal(t, 142, v)
-	}
+	stage.Test(t, Stage1, []stage.TestCase{
+		{
+			Name:   "example",
+			Input:  stageOneInput,
+			Result: 142,
+			Err:    nil,
+		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 55123,
+			Err:    nil,
+		},
+	})
 }
 
 //go:embed data/test_stage2.txt
 var stageTwoInput []byte
 
 func TestStageTwo(t *testing.T) {
-	p := Stage2Tokenizer()
-	s := bytes.NewReader(stageTwoInput)
-	v, err := ProcessInput(p, s)
-	if assert.NoError(t, err) {
-		assert.Equal(t, 281, v)
-	}
+	stage.Test(t, Stage2, []stage.TestCase{
+		{
+			Name:   "example",
+			Input:  stageTwoInput,
+			Result: 281,
+			Err:    nil,
+		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 55260,
+			Err:    nil,
+		},
+	})
 }
 
-func TestOther(t *testing.T) {
+func TestStage2Tokenizer(t *testing.T) {
 	p := Stage2Tokenizer()
 	for _, tc := range []struct {
 		input []byte

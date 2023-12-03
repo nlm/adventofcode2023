@@ -2,15 +2,16 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	_ "embed"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/nlm/adventofcode2023/internal/stage"
 	"github.com/nlm/adventofcode2023/internal/tokenizer"
 )
+
+//go:embed data/input.txt
+var input []byte
 
 const (
 	TZero tokenizer.Key = iota
@@ -52,9 +53,6 @@ func ProcessInput(parser *tokenizer.Tokenizer, r io.Reader) (int, error) {
 	return sum, nil
 }
 
-//go:embed data/input.txt
-var input []byte
-
 func Stage1Tokenizer() *tokenizer.Tokenizer {
 	parser := tokenizer.New().WithOverlap(true)
 	parser.DefineTokensString(TZero, "0")
@@ -70,14 +68,9 @@ func Stage1Tokenizer() *tokenizer.Tokenizer {
 	return parser
 }
 
-func Stage1() error {
+func Stage1(input io.Reader) (any, error) {
 	parser := Stage1Tokenizer()
-	v, err := ProcessInput(parser, bytes.NewReader(input))
-	if err != nil {
-		return err
-	}
-	fmt.Println(v)
-	return nil
+	return ProcessInput(parser, input)
 }
 
 func Stage2Tokenizer() *tokenizer.Tokenizer {
@@ -95,16 +88,11 @@ func Stage2Tokenizer() *tokenizer.Tokenizer {
 	return parser
 }
 
-func Stage2() error {
+func Stage2(input io.Reader) (any, error) {
 	parser := Stage2Tokenizer()
-	v, err := ProcessInput(parser, bytes.NewReader(input))
-	if err != nil {
-		return err
-	}
-	fmt.Println(v)
-	return nil
+	return ProcessInput(parser, input)
 }
 
 func main() {
-	stage.RunCLI(Stage1, Stage2)
+	stage.RunCLI(input, Stage1, Stage2)
 }

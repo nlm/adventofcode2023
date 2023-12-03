@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
-	"fmt"
+	"io"
 
 	"github.com/nlm/adventofcode2023/internal/stage"
 )
@@ -42,24 +41,22 @@ func CalulateGearRatio(parts []Part, symbols []Symbol) int {
 	return sum
 }
 
-func Stage1() error {
-	parts, symbols, err := Parse(bytes.NewReader(input))
+func Stage1(input io.Reader) (any, error) {
+	parts, symbols, err := Parse(input)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(CalulatePartsSum(parts, symbols))
-	return nil
+	return CalulatePartsSum(parts, symbols), nil
 }
 
-func Stage2() error {
-	parts, symbols, err := Parse(bytes.NewReader(input))
+func Stage2(input io.Reader) (any, error) {
+	parts, symbols, err := Parse(input)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(CalulateGearRatio(parts, symbols))
-	return nil
+	return CalulateGearRatio(parts, symbols), nil
 }
 
 func main() {
-	stage.RunCLI(Stage1, Stage2)
+	stage.RunCLI(input, Stage1, Stage2)
 }
