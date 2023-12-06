@@ -41,7 +41,7 @@ func ParseInput(input io.Reader) ([]int, Maps, error) {
 			return nil, nil, err
 		}
 		// fmt.Println("KEY", k, "MAP", cm)
-		maps[k] = cm
+		maps[*k] = cm
 	}
 	return seeds, maps, nil
 }
@@ -51,19 +51,21 @@ type Range struct {
 	Dest   int
 	Len    int
 }
-type ConversionMap []Range
-type Maps map[Key]ConversionMap
+type ConversionMap struct {
+	Ranges []*Range
+}
+type Maps map[Key]*ConversionMap
 type Key struct {
 	Source string
 	Dest   string
 }
 
-func (r Range) Contains(value int) bool {
+func (r *Range) Contains(value int) bool {
 	return value >= r.Source && value <= r.Source+r.Len
 }
 
-func (cm ConversionMap) Value(key int) int {
-	for _, r := range cm {
+func (cm *ConversionMap) Value(key int) int {
+	for _, r := range cm.Ranges {
 		if r.Contains(key) {
 			return r.Dest + (key - r.Source)
 		}
@@ -71,10 +73,9 @@ func (cm ConversionMap) Value(key int) int {
 	return key
 }
 
-func (cm ConversionMap) Values(key int) []int {
+func (cm *ConversionMap) Values(key int) []int {
 	var values []int
-	for _, r := range cm {
-		// if key >= r.Source && key <= r.Source+r.Len {
+	for _, r := range cm.Ranges {
 		if r.Contains(key) {
 			values = append(values, r.Dest+(key-r.Source))
 		}
@@ -85,32 +86,32 @@ func (cm ConversionMap) Values(key int) []int {
 	return []int{key}
 }
 
-func ProcessMap(data []byte) (Key, ConversionMap, error) {
+func ProcessMap(data []byte) (*Key, *ConversionMap, error) {
 	parts := strings.Split(string(data), "\n")
 	headers := strings.Split(parts[0], " ")
 	if len(headers) != 2 || headers[1] != "map:" {
-		return Key{}, nil, fmt.Errorf("invalid header format: >%v<", string(parts[0]))
+		return nil, nil, fmt.Errorf("invalid header format: >%v<", string(parts[0]))
 	}
 	mapName := headers[0]
 	mapKey, err := NameToKey(mapName)
 	if err != nil {
-		return Key{}, nil, err
+		return nil, nil, err
 	}
 	// fmt.Println("MAPNAME", mapName)
-	cm := make(ConversionMap, 0, len(parts)-1)
+	cm := &ConversionMap{Ranges: make([]*Range, 0, len(parts)-1)}
 	for _, line := range parts[1:] {
 		if len(line) == 0 {
 			continue
 		}
 		corr := strings.Split(line, " ")
 		if len(corr) != 3 {
-			return Key{}, nil, fmt.Errorf("invalid correspondance line format: >%v<", line)
+			return nil, nil, fmt.Errorf("invalid correspondance line format: >%v<", line)
 		}
 		destRangeStart := utils.MustAtoi(corr[0])
 		sourceRangeStart := utils.MustAtoi(corr[1])
 		rangeLength := utils.MustAtoi(corr[2])
 		// fmt.Println("RANGE", "SOURCE", sourceRangeStart, "DEST", destRangeStart, "LENGTH", rangeLength)
-		cm = append(cm, Range{
+		cm.Ranges = append(cm.Ranges, &Range{
 			Source: sourceRangeStart,
 			Dest:   destRangeStart,
 			Len:    rangeLength,
@@ -119,12 +120,12 @@ func ProcessMap(data []byte) (Key, ConversionMap, error) {
 	return mapKey, cm, nil
 }
 
-func NameToKey(name string) (Key, error) {
+func NameToKey(name string) (*Key, error) {
 	parts := strings.Split(name, "-to-")
 	if len(parts) != 2 {
-		return Key{}, fmt.Errorf("invalid name: %v", name)
+		return nil, fmt.Errorf("invalid name: %v", name)
 	}
-	return Key{
+	return &Key{
 		Source: parts[0],
 		Dest:   parts[1],
 	}, nil
@@ -154,31 +155,6 @@ var NextTypeMap = map[string]string{
 	TLocation:    TEmpty,
 }
 
-// func GetNextType(s string) string {
-// switch s {
-// case "":
-// 	return "seed"
-// case "seed":
-// 	return "soil"
-// case "soil":
-// 	return "fertilizer"
-// case "fertilizer":
-// 	return "water"
-// case "water":
-// 	return "light"
-// case "light":
-// 	return "temperature"
-// case "temperature":
-// 	return "humidity"
-// case "humidity":
-// 	return "location"
-// case "location":
-// 	return ""
-// default:
-// 	panic("invalid NextType")
-// }
-// }
-
 func (k *Key) Next() bool {
 	var ok bool
 	k.Source = k.Dest
@@ -193,20 +169,18 @@ func InitialKey() Key {
 	return Key{Source: "", Dest: "seed"}
 }
 
-func (maps Maps) ResolveSeedLocation(seed int) int {
-	key := InitialKey()
-	value := seed
-	for key.Next() {
-		cm, ok := maps[key]
-		if !ok {
-			panic("error ResolveSeedLocation map lookup")
-		}
-		// fmt.Print(" -> ", key.Source, " ", value)
-		value = cm.Value(value)
-	}
-	// fmt.Println("-> ", key.Source, " ", value)
-	return value
-}
+// func (maps Maps) ResolveSeedLocation(seed int) int {
+// 	key := InitialKey()
+// 	value := seed
+// 	for key.Next() {
+// 		cm, ok := maps[key]
+// 		if !ok {
+// 			panic("error ResolveSeedLocation map lookup")
+// 		}
+// 		value = cm.Value(value)
+// 	}
+// 	return value
+// }
 
 func (maps Maps) ResolveSeedLocations(seeds []int) []int {
 	key := InitialKey()
@@ -216,13 +190,11 @@ func (maps Maps) ResolveSeedLocations(seeds []int) []int {
 		if !ok {
 			panic("error ResolveSeedLocation map lookup")
 		}
-		// fmt.Print(" -> ", key.Source, " ", value)
 		for _, seed := range seeds {
 			newseeds = append(newseeds, cm.Values(seed)...)
 		}
 		seeds = newseeds
 	}
-	// fmt.Println("-> ", key.Source, " ", value)
 	return seeds
 }
 
@@ -233,9 +205,11 @@ func Stage1(input io.Reader) (any, error) {
 	}
 	nearestLocation := MaxInt
 	for _, seed := range seeds {
-		loc := maps.ResolveSeedLocation(seed)
-		if loc < nearestLocation {
-			nearestLocation = loc
+		locs := maps.ResolveSeedLocations([]int{seed})
+		for _, loc := range locs {
+			if loc < nearestLocation {
+				nearestLocation = loc
+			}
 		}
 	}
 	return nearestLocation, nil
@@ -283,7 +257,6 @@ func Stage2(input io.Reader) (any, error) {
 			}
 			fmt.Print(".")
 		}
-		// fmt.Println(nearestLocation)
 		wg2.Done()
 	}(results)
 
@@ -309,8 +282,6 @@ func Stage2(input io.Reader) (any, error) {
 			wg.Done()
 			fmt.Println("done", time.Since(startTime))
 		}(sr)
-		// fmt.Println("FIXME")
-		// break
 	}
 	wg.Wait()
 	close(results)
@@ -320,6 +291,89 @@ func Stage2(input io.Reader) (any, error) {
 	return nearestLocation, nil
 }
 
+func (maps Maps) AsArray() []*ConversionMap {
+	key := InitialKey()
+	var mapsArray = make([]*ConversionMap, 0, len(maps))
+	for key.Next() {
+		mapsArray = append(mapsArray, maps[key])
+	}
+	return mapsArray
+}
+
+type PipeFunc func(in <-chan int, out chan<- int)
+
+func (cm *ConversionMap) SendValues(key int, out chan<- int) {
+	var found bool
+	for _, r := range cm.Ranges {
+		if r.Contains(key) {
+			if !found {
+				found = true
+			}
+			out <- r.Dest + (key - r.Source)
+		}
+	}
+	if !found {
+		out <- key
+	}
+}
+
+// Stage3 is Stage2 with different run approach
+func Stage3(input io.Reader) (any, error) {
+	seeds, maps, err := ParseInput(input)
+	if err != nil {
+		return nil, err
+	}
+	seedRanges := SeedRanges(seeds)
+
+	// Build Pipeline
+	var pipeline []PipeFunc
+	pipeline = append(pipeline, func(in <-chan int, out chan<- int) {
+		for _, sr := range seedRanges {
+			for i := 0; i < sr.Length; i++ {
+				out <- sr.Start + i
+			}
+		}
+		close(out)
+	})
+	for _, m := range maps.AsArray() {
+		m := m
+		pipeline = append(pipeline, func(in <-chan int, out chan<- int) {
+			for i := range in {
+				m.SendValues(i, out)
+			}
+			close(out)
+		})
+	}
+	pipeline = append(pipeline, func(in <-chan int, out chan<- int) {
+		var nearestLocation = MaxInt
+		for location := range in {
+			if location < nearestLocation {
+				nearestLocation = location
+			}
+		}
+		out <- nearestLocation
+		close(out)
+	})
+
+	// Run the Pipeline
+	chanSize := 1000
+	wg := sync.WaitGroup{}
+	in := make(chan int, chanSize)
+	close(in)
+	for _, fn := range pipeline {
+		wg.Add(1)
+		out := make(chan int, chanSize)
+		go func(fn PipeFunc, in <-chan int, out chan<- int) {
+			fn(in, out)
+			wg.Done()
+		}(fn, in, out)
+		in = out
+	}
+	result := <-in
+	wg.Wait()
+	return result, nil
+}
+
 func main() {
-	stage.RunCLI(input, Stage1, Stage2)
+	stage.RunCLI(input, Stage1, Stage2, Stage3)
 }

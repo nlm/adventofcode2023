@@ -38,3 +38,14 @@ func TestStage2(t *testing.T) {
 		// not testing input due to computational cost
 	})
 }
+
+func TestStage3(t *testing.T) {
+	stage.Test(t, Stage3, []stage.TestCase{
+		{
+			Name:   "example",
+			Input:  example2,
+			Result: 46,
+		},
+		// not testing input due to computational cost
+	})
+}

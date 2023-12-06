@@ -9,8 +9,8 @@ import (
 )
 
 func TestConversionMap(t *testing.T) {
-	cm := make(ConversionMap, 0)
-	cm = append(cm, Range{
+	cm := &ConversionMap{Ranges: make([]*Range, 0)}
+	cm.Ranges = append(cm.Ranges, &Range{
 		Source: 10,
 		Dest:   20,
 		Len:    5,
