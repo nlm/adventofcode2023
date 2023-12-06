@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -54,4 +55,13 @@ func TestSeedRange(t *testing.T) {
 			assert.Equal(t, tc.Result, r)
 		})
 	}
+}
+
+func TestResolveSeedLocation(t *testing.T) {
+	seeds, maps, err := ParseInput(bytes.NewReader(example1))
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Equal(t, []int{79, 14, 55, 13}, seeds)
+	_ = maps
 }
