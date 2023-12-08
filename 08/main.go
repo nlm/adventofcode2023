@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	_ "embed"
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -27,20 +28,22 @@ type Input struct {
 	Nodes        map[string]*Node
 }
 
-func ParseInput(input io.Reader) Input {
+func ParseInput(input io.Reader) (*Input, error) {
 	s := bufio.NewScanner(input)
 	s.Scan()
 	data := Input{}
 	data.Instructions = bytes.Clone(s.Bytes())
-	// fmt.Println("INST:", data.Instructions)
 	data.Nodes = make(map[string]*Node)
 	s.Scan()
 	if len(s.Bytes()) != 0 {
-		panic("no empty line")
+		return nil, fmt.Errorf("no empty line")
 	}
 	for s.Scan() {
 		line := s.Bytes()
 		matches := NodeRE.FindSubmatch(line)
+		if len(matches) != 4 {
+			return nil, fmt.Errorf("parse error: %s", string(line))
+		}
 		// if _, ok := data.Nodes[string(fields[0])]; ok {
 		// 	panic("duplicate")
 		// }
@@ -50,11 +53,14 @@ func ParseInput(input io.Reader) Input {
 			Right: string(matches[3]),
 		}
 	}
-	return data
+	return &data, nil
 }
 
 func Stage1(input io.Reader) (any, error) {
-	data := ParseInput(input)
+	data, err := ParseInput(input)
+	if err != nil {
+		return nil, err
+	}
 	return data.CountSteps("AAA", func(n *Node) bool { return n.Name == "ZZZ" }), nil
 }
 
@@ -80,7 +86,10 @@ func (data *Input) NextNode(node *Node, instruction byte) *Node {
 }
 
 func Stage2(input io.Reader) (any, error) {
-	data := ParseInput(input)
+	data, err := ParseInput(input)
+	if err != nil {
+		return nil, err
+	}
 	var nodes []*Node
 	for k := range data.Nodes {
 		if strings.HasSuffix(k, "A") {
