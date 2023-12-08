@@ -8,49 +8,44 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var stages = make(map[int]StageFunc)
-var flagStage = flag.Int("stage", 1, "stage to run")
+var flagStage = flag.Uint("stage", 1, "stage to run")
 
 var ErrUnimplemented = fmt.Errorf("unimplemented")
 
 // StageFunc is the stage function signature.
 type StageFunc func(input io.Reader) (any, error)
 
-// Register registers a stage in the registry.
-func Register(stage int, f StageFunc) {
-	stages[stage] = f
-}
-
-// Run runs a registered stage function.
-// It returns an error if the stage has not been registered.
-func Run(stage int, input io.Reader) (any, error) {
-	if f, ok := stages[stage]; ok {
-		return f(input)
-	}
-	return nil, fmt.Errorf("stage %d not found", stage)
-}
-
 // RunCLI is a CLI helper to run stages.
 func RunCLI(input any, fns ...StageFunc) {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
-	for i, fn := range fns {
-		Register(i+1, fn)
+	// Find stage
+	stage := int(*flagStage)
+	if stage == 0 || stage > len(fns) {
+		log.Fatalf("stage %d not found", stage)
 	}
+	fn := fns[stage-1]
+	// Prepare reader
 	reader, err := Reader(input)
 	if err != nil {
 		log.Fatal(err)
 	}
-	res, err := Run(*flagStage, reader)
+	// Run
+	start := time.Now()
+	res, err := fn(reader)
+	duration := time.Since(start)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%v\n", res)
+	// Report completion
+	fmt.Printf("%-6v %-20v %-20v\n", "STAGE", "RESULT", "TIME")
+	fmt.Printf("%-6v %-20v %-20v\n", stage, res, duration)
 }
 
 // TestCase represents the input and expected result of a test.
