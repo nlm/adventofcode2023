@@ -18,7 +18,7 @@ func TestStage1(t *testing.T) {
 			Result: 6440,
 		},
 		{
-			Name:   "example",
+			Name:   "input",
 			Input:  input,
 			Result: 247961593,
 		},
