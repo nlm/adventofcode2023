@@ -15,7 +15,7 @@ import (
 //go:embed data/input.txt
 var input []byte
 
-var NodeRE = regexp.MustCompile(`^(\w{3}) = \((\w{3}), (\w{3})\)$`)
+var NodeRE = regexp.MustCompile(`^(?P<name>\w{3}) = \((?P<left>\w{3}), (?P<right>\w{3})\)$`)
 
 type Node struct {
 	Name  string
@@ -33,6 +33,9 @@ func ParseInput(input io.Reader) (*Input, error) {
 	s.Scan()
 	data := Input{}
 	data.Instructions = bytes.Clone(s.Bytes())
+	if data.Instructions == nil {
+		return nil, fmt.Errorf("nil instructions")
+	}
 	data.Nodes = make(map[string]*Node)
 	s.Scan()
 	if len(s.Bytes()) != 0 {
@@ -48,9 +51,9 @@ func ParseInput(input io.Reader) (*Input, error) {
 		// 	panic("duplicate")
 		// }
 		data.Nodes[string(matches[1])] = &Node{
-			Name:  string(matches[1]),
-			Left:  string(matches[2]),
-			Right: string(matches[3]),
+			Name:  string(matches[NodeRE.SubexpIndex("name")]),
+			Left:  string(matches[NodeRE.SubexpIndex("left")]),
+			Right: string(matches[NodeRE.SubexpIndex("right")]),
 		}
 	}
 	return &data, nil
@@ -69,12 +72,18 @@ func (data *Input) CountSteps(start string, stopFunc func(*Node) bool) int {
 	for node := data.Nodes[start]; !stopFunc(node); {
 		instruction := data.Instructions[counter%len(data.Instructions)]
 		node = data.NextNode(node, instruction)
+		if node == nil {
+			return -1
+		}
 		counter++
 	}
 	return counter
 }
 
 func (data *Input) NextNode(node *Node, instruction byte) *Node {
+	if node == nil || data.Nodes == nil {
+		return nil
+	}
 	switch instruction {
 	case 'L':
 		return data.Nodes[node.Left]
