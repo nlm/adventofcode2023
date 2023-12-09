@@ -17,13 +17,9 @@ var input []byte
 type Sequence []int
 type History []Sequence
 
+// IsAllZeroes returns true if all ints contained
 func (seq Sequence) IsAllZeroes() bool {
-	for i := 0; i < len(seq); i++ {
-		if seq[i] != 0 {
-			return false
-		}
-	}
-	return true
+	return utils.All(seq, func(i int) bool { return i == 0 })
 }
 
 func (seq Sequence) Diffs() Sequence {
@@ -93,10 +89,7 @@ func ParseInput(input io.Reader) []Sequence {
 	var sequences []Sequence
 	for s.Scan() {
 		fields := strings.Fields(s.Text())
-		values := make([]int, 0, len(fields))
-		for _, v := range fields {
-			values = append(values, utils.MustAtoi(v))
-		}
+		values := utils.Map(fields, utils.MustAtoi)
 		sequences = append(sequences, values)
 	}
 	return sequences
