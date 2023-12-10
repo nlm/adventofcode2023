@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	_ "embed"
 
 	"github.com/nlm/adventofcode2023/internal/stage"
 )
