@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/nlm/adventofcode2023/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +33,10 @@ func RunCLI(input any, fns ...StageFunc) {
 		log.Fatalf("stage %d not found", stage)
 	}
 	fn := fns[stage-1]
+	// read input.txt if input is nil
+	if input == nil {
+		input = Open("input.txt")
+	}
 	// Prepare reader
 	reader, err := Reader(input)
 	if err != nil {
@@ -68,6 +74,9 @@ type TestCase struct {
 func Test(t *testing.T, fn StageFunc, cases []TestCase) {
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
+			if tc.Input == nil {
+				tc.Input = Open(tc.Name + ".txt")
+			}
 			reader, err := Reader(tc.Input)
 			if !assert.NoError(t, err) {
 				return
@@ -84,6 +93,9 @@ func Test(t *testing.T, fn StageFunc, cases []TestCase) {
 // Test runs the provided test cases against the StageFunc.
 func Benchmark(b *testing.B, fn StageFunc, cases []TestCase) {
 	for _, tc := range cases {
+		if tc.Input == nil {
+			tc.Input = Open(tc.Name + ".txt")
+		}
 		reader, err := Reader(tc.Input)
 		if !assert.NoError(b, err) {
 			return
@@ -120,4 +132,14 @@ func Reader(input any) (io.Reader, error) {
 	default:
 		return nil, fmt.Errorf("unsupported input type: %t", input)
 	}
+}
+
+var stageFS fs.FS
+
+func SetFS(f fs.FS) {
+	stageFS = utils.Must(fs.Sub(f, "data"))
+}
+
+func Open(name string) io.Reader {
+	return utils.Must(stageFS.Open(name))
 }
