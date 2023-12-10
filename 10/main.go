@@ -15,9 +15,8 @@ import (
 var input []byte
 
 type Matrix struct {
-	Data  [][]byte
-	Start Coord
-	Max   Coord
+	Data [][]byte
+	Max  Coord
 }
 
 type Coord struct {
@@ -56,21 +55,15 @@ func (m *Matrix) findByte(b byte) *Coord {
 	return nil
 }
 
-func (m *Matrix) AtCoord(c Coord) *byte {
+func (m *Matrix) AtCoord(c Coord) byte {
 	return m.At(c.X, c.Y)
 }
 
-func (m *Matrix) At(x, y int) *byte {
-	if !m.In(x, y) {
-		return nil
-	}
-	return &m.Data[y][x]
+func (m *Matrix) At(x, y int) byte {
+	return m.Data[y][x]
 }
 
 func (m *Matrix) SetAt(x, y int, b byte) {
-	if !m.In(x, y) {
-		panic("out of bounds")
-	}
 	m.Data[y][x] = b
 }
 
@@ -80,6 +73,10 @@ func (m *Matrix) SetAtCoord(c Coord, b byte) {
 
 func (m *Matrix) In(x, y int) bool {
 	return x >= 0 && x <= m.Max.X && y >= 0 && y <= m.Max.Y
+}
+
+func (m *Matrix) InCoord(c Coord) bool {
+	return c.X >= 0 && c.X <= m.Max.X && c.Y >= 0 && c.Y <= m.Max.Y
 }
 
 func (m *Matrix) String() string {
@@ -112,10 +109,11 @@ var (
 	ValidRights = []byte{'-', '7', 'J', 'S'}
 )
 
+// findNexts finds the possible moves from a position in the matrix,
+// depending on the type of edge at coordinate 'c'.
 func (m *Matrix) FindNexts(c Coord) []Coord {
 	var nexts = make([]Coord, 0, 4)
 	var nextCoord Coord
-	var b *byte
 
 	for _, tc := range []struct {
 		Coord      Coord
@@ -127,166 +125,24 @@ func (m *Matrix) FindNexts(c Coord) []Coord {
 		{c.Right(), ValidRights},
 	} {
 		nextCoord = tc.Coord
-		b = m.AtCoord(nextCoord)
-		if b != nil {
-			i := bytes.IndexByte(tc.ValidBytes, *b)
-			if i != -1 {
-				nexts = append(nexts, nextCoord)
-			}
+		if m.InCoord(nextCoord) && bytes.IndexByte(tc.ValidBytes, m.AtCoord(nextCoord)) != -1 {
+			nexts = append(nexts, nextCoord)
 		}
 	}
 	return nexts
 }
 
-type PipeRunner struct {
-	Matrix *Matrix
-	Coord  Coord
-	Seen   map[Coord]struct{}
-	Done   bool
-	Steps  int
-	Value  int
-}
-
-// func (p PipeRunner) Step() ([]PipeRunner, bool) {
-// 	var runners []PipeRunner
-// 	// var doneRunners []PipeRunner
-// 	var found bool
-// 	p.Seen[p.Coord] = struct{}{}
-// 	for _, next := range p.Matrix.FindNexts(p.Coord) {
-// 		if _, ok := p.Seen[next]; ok {
-// 			if *p.Matrix.AtCoord(next) == 'S' {
-// 				found = true
-// 			}
-// 			continue
-// 		}
-// 		runners = append(runners, PipeRunner{
-// 			Matrix: p.Matrix,
-// 			Coord:  next,
-// 			Seen:   CopyMap(p.Seen),
-// 			// Value:  p.Value + 1,
-// 		})
-// 	}
-// 	// p.Matrix.SetAtCoord(p.Coord, 'x')
-// 	return runners, found
-// }
-
-func (p PipeRunner) Step2() ([]PipeRunner, []PipeRunner) {
-	var runners []PipeRunner
-	var doneRunners []PipeRunner
-	p.Seen[p.Coord] = struct{}{}
-	for i, next := range p.Matrix.FindNexts(p.Coord) {
-		if _, ok := p.Seen[next]; ok {
-			if *p.Matrix.AtCoord(next) == 'S' {
-				doneRunners = append(doneRunners, PipeRunner{
-					Matrix: p.Matrix,
-					Coord:  next,
-					Seen:   CopyMap(p.Seen),
-					Value:  p.Value + 1,
-					Done:   true,
-				})
-			}
-			continue
-		}
-		seen := p.Seen
-		if i > 0 {
-			seen = CopyMap(p.Seen)
-		}
-		runners = append(runners, PipeRunner{
-			Matrix: p.Matrix,
-			Coord:  next,
-			// Seen:   CopyMap(p.Seen),
-			Seen:  seen,
-			Value: p.Value + 1,
-		})
-	}
-	// p.Matrix.SetAtCoord(p.Coord, 'x')
-	return runners, doneRunners
-}
-
-func CopyMap(m map[Coord]struct{}) map[Coord]struct{} {
-	nm := make(map[Coord]struct{}, len(m)+1)
-	for k := range m {
-		nm[k] = struct{}{}
-	}
-	return nm
-}
-
-func FindLargestLoop(m *Matrix) PipeRunner {
-	var runners = []PipeRunner{{
-		Matrix: m,
-		Coord:  m.Start,
-		Seen:   make(map[Coord]struct{}),
-		// Value:  0,
-	}}
-	var maxRunner PipeRunner
-	// var counter = 0
-	// go func() {
-	// 	lastC := 0
-	// 	for range time.NewTicker(time.Second).C {
-	// 		fmt.Println("R:", len(runners), "S:", counter, "M:", maxCounter, "I:", counter-lastC)
-	// 		lastC = counter
-	// 	}
-	// }()
-	// newRunners := make([]PipeRunner, 0, len(runners))
-	for {
-		// newRunners = newRunners[:0]
-		newRunners := make([]PipeRunner, 0, len(runners))
-		for _, r := range runners {
-			rns, drns := r.Step2()
-			newRunners = append(newRunners, rns...)
-			for _, drn := range drns {
-				if drn.Value > maxRunner.Value {
-					maxRunner = drn
-				}
-			}
-		}
-		if len(newRunners) == 0 {
-			break
-		}
-		runners = newRunners
-	}
-	return maxRunner
-}
-
-func ParseInput(input io.Reader) *Matrix {
-	matrix := &Matrix{}
-	s := bufio.NewScanner(input)
-	for s.Scan() {
-		line := make([]byte, 0, len(s.Bytes())+2)
-		line = append(line, '.')
-		line = append(line, bytes.Clone(s.Bytes())...)
-		line = append(line, '.')
-		// matrix.Data = append(matrix.Data, bytes.Clone(s.Bytes()))
-		matrix.Data = append(matrix.Data, line)
-	}
-	var mData [][]byte
-	fakeLine := bytes.Repeat([]byte{'.'}, len(matrix.Data[0]))
-	mData = append(mData, fakeLine)
-	mData = append(mData, matrix.Data...)
-	mData = append(mData, fakeLine)
-	matrix.Data = mData
-	start := matrix.findByte('S')
-	if start == nil {
-		panic("no start")
-	}
-	matrix.Start = *start
-	matrix.Max = Coord{
-		X: len(matrix.Data[0]) - 1,
-		Y: len(matrix.Data) - 1,
-	}
-	return matrix
-}
-
+// findType finds the type of a maze slot from neighbours values.
 func (m *Matrix) findType(c Coord) byte {
 	nexts := m.FindNexts(c)
 	if len(nexts) != 2 {
 		return 0
 	}
 	var (
-		Up    = Coord{c.X, c.Y - 1}
-		Down  = Coord{c.X, c.Y + 1}
-		Left  = Coord{c.X - 1, c.Y}
-		Right = Coord{c.X + 1, c.Y}
+		Up    = c.Up()
+		Down  = c.Down()
+		Left  = c.Left()
+		Right = c.Right()
 	)
 	switch [2]Coord(nexts) {
 	// Up Down
@@ -311,11 +167,114 @@ func (m *Matrix) findType(c Coord) byte {
 	return 0
 }
 
+type PipeRunner struct {
+	Matrix  *Matrix
+	Current Coord
+	Seen    map[Coord]struct{}
+	Count   int
+}
+
+func FindLoop(m *Matrix, origin Coord) PipeRunner {
+	var pr = PipeRunner{
+		Matrix:  m,
+		Current: origin,
+		Seen:    make(map[Coord]struct{}, m.Max.X*m.Max.Y),
+		Count:   0,
+	}
+	for {
+		pr.Seen[pr.Current] = struct{}{}
+		// Find Next
+		var nexts []Coord
+		switch pr.Matrix.AtCoord(pr.Current) {
+		case '|':
+			nexts = []Coord{pr.Current.Up(), pr.Current.Down()}
+		case '-':
+			nexts = []Coord{pr.Current.Left(), pr.Current.Right()}
+		case 'J':
+			nexts = []Coord{pr.Current.Up(), pr.Current.Left()}
+		case '7':
+			nexts = []Coord{pr.Current.Down(), pr.Current.Left()}
+		case 'L':
+			nexts = []Coord{pr.Current.Up(), pr.Current.Right()}
+		case 'F':
+			nexts = []Coord{pr.Current.Down(), pr.Current.Right()}
+		case 'S':
+			nexts = []Coord{}
+			if bytes.IndexByte(ValidUps, pr.Matrix.AtCoord(pr.Current.Up())) != -1 {
+				nexts = append(nexts, pr.Current.Up())
+			}
+			if bytes.IndexByte(ValidDowns, pr.Matrix.AtCoord(pr.Current.Down())) != -1 {
+				nexts = append(nexts, pr.Current.Down())
+			}
+			if bytes.IndexByte(ValidLefts, pr.Matrix.AtCoord(pr.Current.Left())) != -1 {
+				nexts = append(nexts, pr.Current.Left())
+			}
+			if bytes.IndexByte(ValidRights, pr.Matrix.AtCoord(pr.Current.Right())) != -1 {
+				nexts = append(nexts, pr.Current.Right())
+			}
+		}
+
+		var found bool
+		for _, next := range nexts {
+			// Skipping if we've already seen this coordinate.
+			if _, ok := pr.Seen[next]; ok {
+				// Check if we're not back to the start.
+				if !(next == origin && pr.Count > 1) {
+					continue
+				}
+			}
+			// This is only aesthetic
+			// m.SetAtCoord(pr.Current, 'X')
+			pr.Count++
+			pr.Current = next
+			found = true
+			break
+		}
+		// fmt.Println(m)
+		if pr.Current == origin {
+			return pr
+		}
+		if !found {
+			panic("dead end")
+		}
+	}
+}
+
+func ParseInput(input io.Reader) (*Matrix, Coord) {
+	matrix := &Matrix{}
+	s := bufio.NewScanner(input)
+
+	// Surround matrix with '.' to simplify the problem
+	matrix.Data = append(matrix.Data, []byte{})
+	for s.Scan() {
+		line := bytes.NewBuffer(make([]byte, 0, len(s.Bytes())+2))
+		line.WriteByte('.')
+		line.Write(s.Bytes())
+		line.WriteByte('.')
+		matrix.Data = append(matrix.Data, line.Bytes())
+	}
+	matrix.Data = append(matrix.Data, []byte{})
+
+	// Replace first and last placeholders with dotLines
+	dotLine := bytes.Repeat([]byte{'.'}, len(matrix.Data[1]))
+	matrix.Data[0] = dotLine
+	matrix.Data[len(matrix.Data)-1] = dotLine
+
+	// Find origin
+	origin := matrix.findByte('S')
+	if origin == nil {
+		panic("no origin found")
+	}
+	matrix.Max = Coord{
+		X: len(matrix.Data[0]) - 1,
+		Y: len(matrix.Data) - 1,
+	}
+	return matrix, *origin
+}
+
 func Stage1(input io.Reader) (any, error) {
-	m := ParseInput(input)
-	// fmt.Println(m)
-	// fmt.Println(m.Start, "->", m.FindNexts(m.Start))
-	v := FindLargestLoop(m).Value / 2
+	m, origin := ParseInput(input)
+	v := FindLoop(m, origin).Count / 2
 	// fmt.Println(m)
 	return v, nil
 }
@@ -325,13 +284,13 @@ var (
 	DownEdges = []byte{'|', '7', 'F'}
 )
 
-func FindEnclosedTiles(p PipeRunner) int {
+func FindEnclosedTiles(p PipeRunner, origin Coord) int {
 	// Replace Start with corresponding symbol
-	startType := p.Matrix.findType(p.Matrix.Start)
-	if startType == 0 {
-		panic("invalid start type")
+	originType := p.Matrix.findType(origin)
+	if originType == 0 {
+		panic("invalid origin type")
 	}
-	p.Matrix.SetAtCoord(p.Matrix.Start, startType)
+	p.Matrix.SetAtCoord(origin, originType)
 
 	// Find Edges and check innership
 	var counter = 0
@@ -340,69 +299,28 @@ func FindEnclosedTiles(p PipeRunner) int {
 		var ue, de = 0, 0
 		for x, b := range line {
 			_, isEdge := p.Seen[Coord{x, y}]
-			// fmt.Print("(", string(b), ")")
 			if isEdge && bytes.IndexByte(UpEdges, b) != -1 {
 				ue += 1
 			}
 			if isEdge && bytes.IndexByte(DownEdges, b) != -1 {
 				de += 1
 			}
-			// if inLoop && !isEdge {
-			// 	counter++
-			// }
-			// fmt.Print(tp%2 != 0, " ")
-			// fmt.Print(bp%2 != 0, " ")
-			// fmt.Print(!isEdge, " ")
 			if ue%2 != 0 && de%2 != 0 && !isEdge {
-				// fmt.Print("I")
 				counter++
 				p.Matrix.SetAt(x, y, 'I')
 			}
-			// if isEdge {
-			// 	p.Matrix.SetAt(x, y, 'E')
-			// }
-			// fmt.Print("\n")
-			// if b == '-' {
-			// 	continue
-			// }
-			// if isEdge && bytes.IndexByte(LeftEdges, b) != -1 {
-			// 	p.Matrix.SetAt(x, y, '*')
-			// 	inLoop = !inLoop
-			// }
-			// if isEdge && bytes.IndexByte(LeftEdges, b) != -1 {
-			// 	p.Matrix.SetAt(x, y, 'i')
-			// 	inLoop++
-			// 	continue
-			// }
-			// if inLoop > 0 && isEdge && bytes.IndexByte(RightEdges, b) != -1 {
-			// 	p.Matrix.SetAt(x, y, 'o')
-			// 	inLoop--
-			// 	continue
-			// }
-			// if inLoop && !isEdge {
-			// 	counter++
-			// 	p.Matrix.SetAt(x, y, 'I')
-			// }
 		}
-		// inLoop = false
 	}
 	return counter
 }
 
 func Stage2(input io.Reader) (any, error) {
-	m := ParseInput(input)
-	// fmt.Println(m)
-	// fmt.Println(m.Start, "->", m.FindNexts(m.Start))
-	r := FindLargestLoop(m)
-	v := FindEnclosedTiles(r)
-	// fmt.Println(m)
+	m, origin := ParseInput(input)
+	r := FindLoop(m, origin)
+	v := FindEnclosedTiles(r, origin)
 	return v, nil
 }
 
-//go:embed data/example2.txt
-var example []byte
-
 func main() {
 	stage.RunCLI(input, Stage1, Stage2)
-	// stage.RunCLI(example, Stage1, Stage2)
 }

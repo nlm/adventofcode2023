@@ -91,6 +91,11 @@ func BenchmarkStage1(b *testing.B) {
 			Input:  example5,
 			Result: 2,
 		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 6942,
+		},
 	})
 }
 
@@ -120,6 +125,11 @@ func TestStage2(t *testing.T) {
 			Name:   "example10",
 			Input:  example10,
 			Result: 7,
+		},
+		{
+			Name:   "input",
+			Input:  input,
+			Result: 297,
 		},
 	})
 }
