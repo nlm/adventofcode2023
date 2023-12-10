@@ -81,6 +81,29 @@ func Test(t *testing.T, fn StageFunc, cases []TestCase) {
 	}
 }
 
+// Test runs the provided test cases against the StageFunc.
+func Benchmark(b *testing.B, fn StageFunc, cases []TestCase) {
+	for _, tc := range cases {
+		reader, err := Reader(tc.Input)
+		if !assert.NoError(b, err) {
+			return
+		}
+		data, err := io.ReadAll(reader)
+		if !assert.NoError(b, err) {
+			return
+		}
+		b.Run(tc.Name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				res, err := fn(bytes.NewReader(data))
+				if tc.Err != nil && !assert.ErrorIs(b, err, tc.Err) {
+					return
+				}
+				assert.Equal(b, tc.Result, res)
+			}
+		})
+	}
+}
+
 // Reader converts some classic input type as io.Reader.
 func Reader(input any) (io.Reader, error) {
 	if input == nil {
