@@ -16,6 +16,7 @@ import (
 )
 
 var flagStage = flag.Uint("stage", 1, "stage to run")
+var flagInput = flag.String("input", "input", "input to read")
 
 var ErrUnimplemented = fmt.Errorf("unimplemented")
 
@@ -35,7 +36,7 @@ func RunCLI(input any, fns ...StageFunc) {
 	fn := fns[stage-1]
 	// read input.txt if input is nil
 	if input == nil {
-		input = Open("input.txt")
+		input = Open(*flagInput + ".txt")
 	}
 	// Prepare reader
 	reader, err := Reader(input)
