@@ -1,12 +1,13 @@
 package main
 
 import (
-	_ "embed"
 	"fmt"
 	"io"
+
+	"github.com/nlm/adventofcode2023/internal/matrix"
 )
 
-func FindEmpty(m *Matrix, emptyb byte) ([]int, []int) {
+func FindEmpty(m *matrix.Matrix, emptyb byte) ([]int, []int) {
 	var (
 		emptyX []int
 		emptyY []int
@@ -41,7 +42,7 @@ func FindEmpty(m *Matrix, emptyb byte) ([]int, []int) {
 }
 
 type Galaxy struct {
-	Coord
+	matrix.Coord
 	Id int
 }
 
@@ -49,14 +50,14 @@ func (g Galaxy) String() string {
 	return fmt.Sprintf("{G%d (%d, %d)}", g.Id, g.X, g.Y)
 }
 
-func FindGalaxyCoordinates(m Matrix) []Galaxy {
+func FindGalaxyCoordinates(m matrix.Matrix) []Galaxy {
 	id := 1
 	var galaxies []Galaxy
 	for y := 0; y < m.Len.Y; y++ {
 		for x := 0; x < m.Len.X; x++ {
 			if m.At(x, y) == '#' {
 				galaxies = append(galaxies, Galaxy{
-					Coord: Coord{x, y},
+					Coord: matrix.Coord{X: x, Y: y},
 					Id:    id,
 				})
 				id++
@@ -91,7 +92,10 @@ func PathLength(g1, g2 Galaxy, emptyX, emptyY []int, emptyVal int) int {
 }
 
 func Stage(input io.Reader, expansionSize int) (any, error) {
-	m := NewFromReader(input)
+	m, err := matrix.NewFromReader(input)
+	if err != nil {
+		return nil, err
+	}
 	emptyX, emptyY := FindEmpty(m, '.')
 	gx := FindGalaxyCoordinates(*m)
 	sum := 0
