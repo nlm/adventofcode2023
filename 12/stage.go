@@ -8,6 +8,8 @@ import (
 	_ "net/http/pprof"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/nlm/adventofcode2023/internal/utils"
 )
@@ -18,9 +20,9 @@ type ConditionRecord struct {
 }
 
 func (cr ConditionRecord) Unfold() ConditionRecord {
-	stats := cr.Stats[:]
-	for i := 0; i < 4; i++ {
-		cr.Stats = append(cr.Stats, stats...)
+	var stats []int
+	for i := 0; i < 5; i++ {
+		stats = append(stats, cr.Stats[:]...)
 	}
 	return ConditionRecord{
 		Record: cr.Record.Unfold(),
@@ -155,12 +157,16 @@ func SliceEqual[T comparable](a, b []T) bool {
 }
 
 var arrCache = make(map[string][][]int)
+var arrCacheMut = sync.RWMutex{}
 
 func Solve(block []byte) [][]int {
 	key := string(block)
+	arrCacheMut.RLock()
 	if v, ok := arrCache[key]; ok {
+		arrCacheMut.RUnlock()
 		return v
 	}
+	arrCacheMut.RUnlock()
 	var arrangements [][]int
 	rec := NewBlock(block)
 	if rec.Unknowns > 0 {
@@ -172,6 +178,8 @@ func Solve(block []byte) [][]int {
 	} else {
 		arrangements = append(arrangements, CalculateArrangement(block))
 	}
+	arrCacheMut.Lock()
+	defer arrCacheMut.Unlock()
 	arrCache[key] = arrangements
 	return arrangements
 }
@@ -192,6 +200,7 @@ type Indexes struct {
 	Values  [][][]int
 	Current []int
 	Max     []int
+	values  []int
 }
 
 func NewIndexes(values [][][]int) Indexes {
@@ -199,6 +208,7 @@ func NewIndexes(values [][][]int) Indexes {
 		Values:  values,
 		Current: make([]int, len(values)),
 		Max:     make([]int, len(values)),
+		values:  make([]int, 0),
 	}
 	for i := 0; i < len(values); i++ {
 		idxs.Max[i] = len(values[i]) - 1
@@ -207,13 +217,14 @@ func NewIndexes(values [][][]int) Indexes {
 }
 
 func (idxs *Indexes) Value() []int {
-	values := make([]int, 0, len(idxs.Values))
+	// idxs.values = make([]int, 0, len(idxs.Values))
+	idxs.values = idxs.values[:0]
 	for i := 0; i < len(idxs.Values); i++ {
 		if len(idxs.Values[i]) > 0 {
-			values = append(values, idxs.Values[i][idxs.Current[i]]...)
+			idxs.values = append(idxs.values, idxs.Values[i][idxs.Current[i]]...)
 		}
 	}
-	return values
+	return idxs.values
 }
 
 func (idxs *Indexes) IsMax() bool {
@@ -280,13 +291,25 @@ func Stage2(input io.Reader) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	var count int
+	var (
+		count int
+		m     sync.Mutex
+		wg    sync.WaitGroup
+	)
 	for _, cr := range crs {
-		// start := time.Now()
-		cr = cr.Unfold()
-		optcount := cr.CountOptions()
-		// fmt.Println("DONE", time.Since(start))
-		count += optcount
+		wg.Add(1)
+		go func(cr ConditionRecord) {
+			start := time.Now()
+			cr = cr.Unfold()
+			fmt.Println(string(cr.Record.Data), cr.Stats)
+			optcount := cr.CountOptions()
+			fmt.Println("DONE", time.Since(start))
+			m.Lock()
+			defer m.Unlock()
+			count += optcount
+			wg.Done()
+		}(cr)
 	}
+	wg.Wait()
 	return count, nil
 }
