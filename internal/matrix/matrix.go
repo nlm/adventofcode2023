@@ -13,6 +13,17 @@ type Matrix struct {
 	Len  Coord
 }
 
+func (m *Matrix) Clone() *Matrix {
+	nm := &Matrix{
+		Data: make([][]byte, len(m.Data)),
+		Len:  m.Len,
+	}
+	for y := 0; y < m.Len.Y; y++ {
+		nm.Data[y] = bytes.Clone(m.Data[y])
+	}
+	return nm
+}
+
 var ErrInconsistentGeometry = fmt.Errorf("inconsistent geometry")
 
 func NewFromReader(input io.Reader) (*Matrix, error) {
