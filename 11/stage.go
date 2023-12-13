@@ -7,7 +7,7 @@ import (
 	"github.com/nlm/adventofcode2023/internal/matrix"
 )
 
-func FindEmpty(m *matrix.Matrix, emptyb byte) ([]int, []int) {
+func FindEmpty(m *matrix.Matrix[byte], emptyb byte) ([]int, []int) {
 	var (
 		emptyX []int
 		emptyY []int
@@ -50,7 +50,7 @@ func (g Galaxy) String() string {
 	return fmt.Sprintf("{G%d (%d, %d)}", g.Id, g.X, g.Y)
 }
 
-func FindGalaxyCoordinates(m matrix.Matrix) []Galaxy {
+func FindGalaxyCoordinates(m matrix.Matrix[byte]) []Galaxy {
 	id := 1
 	var galaxies []Galaxy
 	for y := 0; y < m.Len.Y; y++ {

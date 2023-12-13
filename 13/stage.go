@@ -9,7 +9,7 @@ import (
 	"github.com/nlm/adventofcode2023/internal/utils"
 )
 
-func FindYReflection(m *matrix.Matrix, smudges int) int {
+func FindYReflection(m *matrix.Matrix[byte], smudges int) int {
 	var maxY = 0
 	ref := m
 	for y := 0; y < m.Len.Y; y++ {
@@ -41,7 +41,7 @@ func FindYReflection(m *matrix.Matrix, smudges int) int {
 	return maxY
 }
 
-func FindXReflection(m *matrix.Matrix, smudges int) int {
+func FindXReflection(m *matrix.Matrix[byte], smudges int) int {
 	var maxX = 0
 	ref := m
 	for x := 0; x < m.Len.X; x++ {
