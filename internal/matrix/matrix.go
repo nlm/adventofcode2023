@@ -115,6 +115,15 @@ func (m Matrix[T]) InCoord(c Coord) bool {
 	return m.In(c.X, c.Y)
 }
 
+func SMatrix(m *Matrix[byte]) string {
+	sb := strings.Builder{}
+	for y := 0; y < m.Len.Y; y++ {
+		sb.Write(m.Data[y*m.Len.X : (y+1)*m.Len.X])
+		sb.WriteByte('\n')
+	}
+	return sb.String()
+}
+
 func (m Matrix[T]) String() string {
 	sb := strings.Builder{}
 	for y := 0; y < m.Len.Y; y++ {
