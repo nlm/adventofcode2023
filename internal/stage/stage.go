@@ -51,8 +51,8 @@ func RunCLI(input any, fns ...StageFunc) {
 		log.Fatal(err)
 	}
 	// Report completion
-	fmt.Printf("%-6v %-20v %-20v\n", "STAGE", "RESULT", "TIME")
-	fmt.Printf("%-6v %-20v %-20v\n", stage, res, duration)
+	fmt.Printf("%-6v %-20v %-20v %-20v\n", "STAGE", "INPUT", "RESULT", "TIME")
+	fmt.Printf("%-6v %-20v %-20v %-20v\n", stage, *flagInput, res, duration)
 }
 
 // TestCase represents the input and expected result of a test.
