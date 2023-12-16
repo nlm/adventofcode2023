@@ -6,6 +6,7 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/nlm/adventofcode2023/internal/stage"
 	"github.com/nlm/adventofcode2023/internal/utils"
 )
 
@@ -23,7 +24,7 @@ func Hash(bytes []byte) int {
 		}
 		// Report(b)
 		currentValue += int(b)
-		currentValue = currentValue * 17
+		currentValue *= 17
 		currentValue %= 256
 	}
 	return currentValue
@@ -34,6 +35,7 @@ func Stage1(input io.Reader) (any, error) {
 	data := utils.Must(io.ReadAll(input))
 	sum := 0
 	for _, step := range bytes.Split(data, []byte{','}) {
+		stage.Println(string(step))
 		sum += Hash(step)
 	}
 	return sum, nil
@@ -122,7 +124,7 @@ func Stage2(input io.Reader) (any, error) {
 	for _, step := range bytes.Split(data, []byte{','}) {
 		inst := ParseInstruction(step)
 		boxId := Hash([]byte(inst.Lens.Label))
-		// fmt.Printf("%+v -> %v\n", inst, boxId)
+		stage.Printf("%+v -> %v\n", inst, boxId)
 		if inst.Remove {
 			boxes[boxId].Remove(inst.Lens.Label)
 		} else {
