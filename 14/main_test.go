@@ -22,6 +22,10 @@ var Stage2TestCases = []stage.TestCase{
 		Name:   "example",
 		Result: 64,
 	},
+	{
+		Name:   "input",
+		Result: 106390,
+	},
 }
 
 // Do not edit below
