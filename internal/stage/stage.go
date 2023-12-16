@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"os"
+	"runtime/pprof"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +19,10 @@ import (
 
 var flagStage = flag.Uint("stage", 1, "stage to run")
 var flagInput = flag.String("input", "input", "input to read")
+var flagRuns = flag.Uint("runs", 1, "number of runs to do")
+var flagVerbose = flag.Bool("v", false, "verbose output")
+var flagDebug = flag.Bool("debug", false, "debug")
+var flagCpuProf = flag.String("cpuprof", "", "profile cpu")
 
 var ErrUnimplemented = fmt.Errorf("unimplemented")
 
@@ -34,25 +40,64 @@ func RunCLI(input any, fns ...StageFunc) {
 		log.Fatalf("stage %d not found", stage)
 	}
 	fn := fns[stage-1]
+
+	// Run
 	// read input.txt if input is nil
 	if input == nil {
 		input = Open(*flagInput + ".txt")
 	}
-	// Prepare reader
-	reader, err := Reader(input)
-	if err != nil {
-		log.Fatal(err)
+	if *flagRuns > 1 {
+		input = utils.Must(io.ReadAll(utils.Must(Reader(input))))
 	}
-	// Run
-	start := time.Now()
-	res, err := fn(reader)
-	duration := time.Since(start)
-	if err != nil {
-		log.Fatal(err)
+	var (
+		minDuration   time.Duration
+		maxDuration   time.Duration
+		totalDuration time.Duration
+	)
+
+	// pprof
+	if *flagCpuProf != "" {
+		f := utils.Must(os.Create(*flagCpuProf))
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			panic(err)
+		}
+		defer pprof.StopCPUProfile()
 	}
-	// Report completion
+
 	fmt.Printf("%-6v %-20v %-20v %-20v\n", "STAGE", "INPUT", "RESULT", "TIME")
-	fmt.Printf("%-6v %-20v %-20v %-20v\n", stage, *flagInput, res, duration)
+	for i := 0; i < int(*flagRuns); i++ {
+		// Prepare reader
+		reader, err := Reader(input)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Run
+		start := time.Now()
+		res, err := fn(reader)
+		duration := time.Since(start)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Account times
+		totalDuration += duration
+		if minDuration == 0 || duration < minDuration {
+			minDuration = duration
+		}
+		if duration > maxDuration {
+			maxDuration = duration
+		}
+		// Report completion
+		if i == 0 {
+			fmt.Printf("%-6v %-20v %-20v %-20v\n", stage, *flagInput, res, duration)
+		}
+	}
+
+	if *flagRuns > 1 {
+		fmt.Println()
+		fmt.Printf("%-6v %-20v %-20v %-20v\n", "RUNS", "MIN", "MAX", "AVG")
+		fmt.Printf("%-6v %-20v %-20v %-20v\n", *flagRuns, minDuration, maxDuration, totalDuration/time.Duration(*flagRuns))
+	}
 }
 
 // TestCase represents the input and expected result of a test.
@@ -143,4 +188,12 @@ func SetFS(f fs.FS) {
 
 func Open(name string) io.Reader {
 	return utils.Must(stageFS.Open(name))
+}
+
+func Verbose() bool {
+	return *flagVerbose
+}
+
+func Debug() bool {
+	return *flagDebug
 }
