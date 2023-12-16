@@ -28,3 +28,18 @@ func (c Coord) Down() Coord {
 func (c Coord) String() string {
 	return fmt.Sprintf("{X: %d, Y: %d}", c.X, c.Y)
 }
+
+func (c Coord) Add(v Vec) Coord {
+	return Coord{c.X + v.X, c.Y + v.Y}
+}
+
+func (c Coord) Clone(v Vec) Coord {
+	return c
+}
+
+func (c *Coord) Move(v Vec) {
+	c.X += v.X
+	c.Y += v.Y
+}
+
+type Vec Coord

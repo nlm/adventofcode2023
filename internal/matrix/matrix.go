@@ -91,11 +91,11 @@ func (m *Matrix[T]) Find(value T) (Coord, bool) {
 // 	m.Len.X++
 // }
 
-func (m Matrix[T]) AtCoord(c Coord) T {
+func (m *Matrix[T]) AtCoord(c Coord) T {
 	return m.At(c.X, c.Y)
 }
 
-func (m Matrix[T]) At(x, y int) T {
+func (m *Matrix[T]) At(x, y int) T {
 	return m.Data[y*m.Len.X+x]
 }
 
@@ -107,11 +107,11 @@ func (m *Matrix[T]) SetAtCoord(c Coord, value T) {
 	m.SetAt(c.X, c.Y, value)
 }
 
-func (m Matrix[T]) In(x, y int) bool {
+func (m *Matrix[T]) In(x, y int) bool {
 	return x >= 0 && x <= m.Len.X-1 && y >= 0 && y <= m.Len.Y-1
 }
 
-func (m Matrix[T]) InCoord(c Coord) bool {
+func (m *Matrix[T]) InCoord(c Coord) bool {
 	return m.In(c.X, c.Y)
 }
 
@@ -124,7 +124,7 @@ func SMatrix(m *Matrix[byte]) string {
 	return sb.String()
 }
 
-func (m Matrix[T]) String() string {
+func (m *Matrix[T]) String() string {
 	sb := strings.Builder{}
 	for y := 0; y < m.Len.Y; y++ {
 		fmt.Fprint(&sb, m.Data[y*m.Len.X:(y+1)*m.Len.X])
