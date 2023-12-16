@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/nlm/adventofcode2023/internal/matrix"
@@ -35,7 +34,7 @@ func FindYReflection(m *matrix.Matrix[byte], smudges int) int {
 		}
 		if ok && !asymetric && smudge == smudges {
 			maxY = y + 1
-			fmt.Println(m, "Y:", maxY)
+			// fmt.Println(m, "Y:", maxY)
 		}
 	}
 	return maxY
@@ -67,7 +66,7 @@ func FindXReflection(m *matrix.Matrix[byte], smudges int) int {
 		}
 		if ok && !asymetric && smudge == smudges {
 			maxX = x + 1
-			fmt.Println(m, "X:", maxX)
+			// fmt.Println(m, "X:", maxX)
 		}
 	}
 	return maxX
@@ -84,10 +83,10 @@ func Stage(input io.Reader, smudges int) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(m)
+		// fmt.Println(m)
 		xr += FindXReflection(m, smudges)
 		yr += FindYReflection(m, smudges)
-		fmt.Printf("\nSUM X:%d Y:%d\n\n", xr, yr)
+		// fmt.Printf("\nSUM X:%d Y:%d\n\n", xr, yr)
 	}
 	return yr*100 + xr, nil
 }
