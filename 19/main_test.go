@@ -9,16 +9,22 @@ import (
 var Stage1TestCases = []stage.TestCase{
 	{
 		Name:   "example",
-		Result: nil,
-		Err:    stage.ErrUnimplemented,
+		Result: 19114,
+	},
+	{
+		Name:   "input",
+		Result: 420739,
 	},
 }
 
 var Stage2TestCases = []stage.TestCase{
 	{
 		Name:   "example",
-		Result: nil,
-		Err:    stage.ErrUnimplemented,
+		Result: 167409079868000,
+	},
+	{
+		Name:   "input",
+		Result: 130251901420382,
 	},
 }
 
