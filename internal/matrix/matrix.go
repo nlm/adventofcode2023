@@ -69,6 +69,12 @@ func (m *Matrix[T]) Find(value T) (Coord, bool) {
 	return Coord{}, false
 }
 
+func (m *Matrix[T]) Fill(value T) {
+	for i := 0; i < len(m.Data); i++ {
+		m.Data[i] = value
+	}
+}
+
 // func (m *Matrix[T]) InsertLineBefore(y int, value T) {
 // 	yLen := m.Len.Y
 // 	// m.Data = append(m.Data, []byte{})
