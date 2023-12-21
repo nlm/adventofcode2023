@@ -77,7 +77,7 @@ func RunCLI(input any, fns ...StageFunc) {
 		res, err := fn(reader)
 		duration := time.Since(start)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(fmt.Errorf("error: %v", err))
 		}
 		// Account times
 		totalDuration += duration
